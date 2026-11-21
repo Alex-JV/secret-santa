@@ -1,0 +1,2052 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Secret Santa</title>
+<meta name="description" content="Ouvre ton lien pour découvrir à qui tu offres un cadeau.">
+<meta property="og:title" content="Secret Santa">
+<meta property="og:description" content="Ouvre ton lien pour découvrir à qui tu offres un cadeau.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playwrite+FR+Trad&amp;display=swap">
+<style>
+:root {
+  --wrap: #e7efe9;
+  --wrap-dot: #d1dfd5;
+  --paper: #fffdf7;
+  --ink: #14342b;
+  --soft: #4c6359;
+  --houx: #b3202c;
+  --btn: #b3202c;
+  --on-btn: #ffffff;
+  --gold: #b0862b;
+  --line: #c3d1c8;
+  --field: #ffffff;
+  --twine-white: #fffdf7;
+  --ok: #1d6a4e;
+  --note: #e3f0e8;
+  --shade: 20, 52, 43;
+  --slip: #ffffff;
+  --slip-ink: #24408e;
+  --seyes: rgba(98, 108, 200, 0.2);
+  --seyes-strong: rgba(98, 108, 200, 0.46);
+  --font-ui: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Playwrite FR Trad", "Segoe Script", "Bradley Hand", "Snell Roundhand", "Apple Chancery", cursive;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --wrap: #0c211b;
+    --wrap-dot: #133027;
+    --paper: #17362c;
+    --ink: #edf4ef;
+    --soft: #abbfb5;
+    --houx: #f2777e;
+    --btn: #c22a36;
+    --on-btn: #ffffff;
+    --gold: #e0bb62;
+    --line: #2c4f42;
+    --field: #0f2a22;
+    --twine-white: #f3efe4;
+    --ok: #84d6b1;
+    --note: #1e4638;
+    --shade: 0, 0, 0;
+    --slip: #f6f3ea;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --wrap: #0c211b;
+  --wrap-dot: #133027;
+  --paper: #17362c;
+  --ink: #edf4ef;
+  --soft: #abbfb5;
+  --houx: #f2777e;
+  --btn: #c22a36;
+  --on-btn: #ffffff;
+  --gold: #e0bb62;
+  --line: #2c4f42;
+  --field: #0f2a22;
+  --twine-white: #f3efe4;
+  --ok: #84d6b1;
+  --note: #1e4638;
+  --shade: 0, 0, 0;
+  --slip: #f6f3ea;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background-color: var(--wrap);
+  background-image:
+    radial-gradient(circle, var(--wrap-dot) 3px, transparent 3.7px),
+    radial-gradient(circle, var(--wrap-dot) 3px, transparent 3.7px);
+  background-size: 44px 44px;
+  background-position: 0 0, 22px 22px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+#app {
+  overflow-x: hidden; /* l'étiquette qui se balance ne doit jamais élargir la page */
+  overflow-x: clip;
+}
+
+.page {
+  max-width: 31rem;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+/* ---------- L'étiquette suspendue à sa ficelle ---------- */
+
+.hang {
+  position: relative;
+  padding-top: 3.5rem;
+  transform-origin: 50% 0;
+  -webkit-perspective: 60rem;
+  perspective: 60rem;
+}
+
+.twine {
+  position: absolute;
+  z-index: 2;
+  top: -3rem;
+  left: 50%;
+  width: 6px;
+  height: 8.125rem; /* 3rem hors champ + 3.5rem + 1.625rem jusqu'au centre de l'œillet */
+  margin-left: -3px;
+  border-radius: 0 0 3px 3px;
+  background: repeating-linear-gradient(135deg, var(--houx) 0, var(--houx) 4px, var(--twine-white) 4px, var(--twine-white) 8px);
+  box-shadow: 1px 0 1px rgba(var(--shade), 0.18);
+}
+
+.tag {
+  --cut: 1.5rem;
+  position: relative;
+  padding: 3.7rem 1.4rem 1.6rem;
+  text-align: center;
+  background:
+    linear-gradient(135deg, transparent calc(var(--cut) - 0.6px), var(--paper) var(--cut)) left top / 50.5% 100% no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cut) - 0.6px), var(--paper) var(--cut)) right top / 50.5% 100% no-repeat;
+  border-radius: 0 0 1.1rem 1.1rem;
+  -webkit-filter: drop-shadow(0 0.6rem 1rem rgba(var(--shade), 0.16)) drop-shadow(0 1px 1px rgba(var(--shade), 0.2));
+  filter: drop-shadow(0 0.6rem 1rem rgba(var(--shade), 0.16)) drop-shadow(0 1px 1px rgba(var(--shade), 0.2));
+}
+
+.eyelet {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: -0.625rem;
+  border-radius: 50%;
+  background: var(--wrap);
+  box-shadow: 0 0 0 0.3rem var(--gold), inset 0 2px 3px rgba(0, 0, 0, 0.28);
+}
+
+.title {
+  margin: 0;
+  font-size: 2.1rem;
+  font-size: clamp(1.9rem, 8.6vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.meta {
+  margin-top: 0.8rem;
+  color: var(--soft);
+}
+
+.meta p {
+  margin: 0;
+  text-wrap: balance;
+}
+
+.meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tag-body {
+  margin-top: 1.4rem;
+  padding-top: 1.4rem;
+  border-top: 2px dashed var(--line);
+}
+
+.tag-body > p:first-child {
+  margin-top: 0;
+}
+
+.tag-body > p:last-child {
+  margin-bottom: 0;
+}
+
+.hello {
+  margin: 0 0 0.15rem;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  margin: 0 0 0.6rem;
+  font-size: 1.125rem;
+  text-wrap: balance;
+}
+
+/* ---------- Champs et boutons ---------- */
+
+.label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 600;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: 3.1rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 0.8rem;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--soft);
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+select.input {
+  padding-right: 2.2rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: right 1.05rem center, right 0.7rem center;
+  background-size: 0.36rem 0.36rem, 0.36rem 0.36rem;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+textarea.input {
+  min-height: 4.6rem;
+  resize: vertical;
+}
+
+.input:focus,
+.btn:focus,
+.link-btn:focus,
+.icon-btn:focus,
+summary:focus,
+.reveal:focus {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.btn:focus:not(:focus-visible),
+.link-btn:focus:not(:focus-visible),
+.icon-btn:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+.reveal:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.25rem;
+  margin: 0;
+  padding: 0.7rem 1.25rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-primary {
+  background: var(--btn);
+  color: var(--on-btn);
+}
+
+.btn-ghost {
+  border-color: var(--ink);
+}
+
+.btn-solid {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-small {
+  width: auto;
+  min-height: 2.75rem;
+  padding: 0.4rem 1rem;
+  font-size: 1rem;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover:not([disabled]) {
+    -webkit-filter: brightness(0.92);
+    filter: brightness(0.92);
+  }
+
+  .btn-ghost:hover:not([disabled]) {
+    background: rgba(var(--shade), 0.07);
+  }
+
+  .btn-solid:hover:not([disabled]) {
+    opacity: 0.88;
+  }
+}
+
+.link-btn {
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.5rem 0.4rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.icon-btn {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--soft);
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.msg {
+  margin: 0.6rem 0 0;
+  color: var(--soft);
+  font-size: 0.97rem;
+}
+
+.msg-error {
+  color: var(--houx);
+  font-weight: 600;
+}
+
+.msg:empty {
+  display: none;
+}
+
+.tag-body .lead + .btn {
+  margin-top: 0.5rem;
+}
+
+/* ---------- Les petits papiers ---------- */
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 400;
+}
+
+.slip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.1rem 0.85rem 0.2rem;
+  background-color: var(--slip);
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(2rem - 1px), var(--seyes-strong) calc(2rem - 1px), var(--seyes-strong) 2rem),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(0.5rem - 1px), var(--seyes) calc(0.5rem - 1px), var(--seyes) 0.5rem),
+    repeating-linear-gradient(to right, transparent 0, transparent calc(2rem - 1px), var(--seyes) calc(2rem - 1px), var(--seyes) 2rem);
+  color: var(--slip-ink);
+  box-shadow: 0 1px 2px rgba(var(--shade), 0.28);
+  transform: rotate(-1.5deg);
+}
+
+.slip .hand {
+  display: block;
+  font-size: 1.02rem;
+  line-height: 2.1;
+  overflow-wrap: anywhere;
+}
+
+.slip-row {
+  margin: 0 0 1.2rem;
+}
+
+.slip-big {
+  padding: 0.7rem 1.6rem 0.9rem;
+  transform: rotate(-2deg);
+}
+
+.slip-big .hand {
+  font-size: 2.1rem;
+  font-size: clamp(1.8rem, 8.8vw, 2.5rem);
+  line-height: 2;
+}
+
+.slips-wrap {
+  margin-top: 2.2rem;
+}
+
+.quiet-title {
+  margin: 0 0 0.5rem;
+  color: var(--soft);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.slips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slips li {
+  margin: 0.35rem 0.3rem;
+}
+
+.slips li:nth-child(3n + 2) .slip {
+  transform: rotate(1.4deg);
+}
+
+.slips li:nth-child(3n) .slip {
+  transform: rotate(-0.5deg);
+}
+
+.slips li:nth-child(5n) .slip {
+  transform: rotate(2.2deg);
+}
+
+/* ---------- Le tirage révélé ---------- */
+
+.reveal {
+  border-radius: 0.5rem;
+}
+
+.reveal-hello {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  text-wrap: balance;
+}
+
+.wish {
+  margin: 0 0 1.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--note);
+  text-align: left;
+}
+
+.wish p {
+  margin: 0;
+}
+
+.wish-label {
+  font-weight: 700;
+}
+
+.wish-text {
+  margin-top: 0.2rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- La feuille de l'organisateur ---------- */
+
+.sheet {
+  margin-top: 2.5rem;
+  padding: 1.4rem 1.2rem 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--paper);
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.flash {
+  margin: 1rem 0 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--note);
+  font-weight: 600;
+}
+
+.note {
+  margin: 1rem 0 0;
+  padding: 0.8rem 1rem;
+  border: 2px dashed var(--line);
+  border-radius: 0.8rem;
+  font-size: 0.97rem;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.check input {
+  flex: none;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0.15rem 0.7rem 0 0;
+  accent-color: var(--btn);
+}
+
+.block {
+  margin-top: 1.4rem;
+  padding-top: 1.4rem;
+  border-top: 2px dashed var(--line);
+}
+
+.block h3,
+.block summary {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.block h3 + * {
+  margin-top: 0.7rem;
+}
+
+.block summary {
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.block h3 + .msg {
+  margin-top: 0.3rem;
+}
+
+.field {
+  margin-top: 0.9rem;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+}
+
+@media (max-width: 21.9rem) {
+  .row2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
+.add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.add-row .btn {
+  width: auto;
+  min-height: 3.1rem;
+}
+
+.pair-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.9rem;
+}
+
+.pair-row + .btn {
+  margin-top: 0.6rem;
+}
+
+.rows {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rows li:last-child {
+  border-bottom: 0;
+}
+
+.rows .name {
+  min-width: 0;
+  padding: 0.3rem 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.send-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0;
+}
+
+.send-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.send-actions {
+  display: flex;
+}
+
+.send-actions .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+.send-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ok);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.send-manual {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+
+.send-manual .input {
+  min-height: 9rem;
+  font-size: 1rem;
+}
+
+.actions {
+  margin-top: 1.1rem;
+}
+
+.actions .btn + .btn,
+.actions .btn + .link-btn {
+  margin-top: 0.6rem;
+}
+
+.actions .link-btn {
+  display: block;
+  width: 100%;
+}
+
+.claim {
+  margin: 2rem 0 0;
+  text-align: center;
+}
+
+/* ---------- Mouvement ---------- */
+
+@keyframes ss-swing {
+  0% { transform: rotate(3.4deg); }
+  28% { transform: rotate(-2.3deg); }
+  52% { transform: rotate(1.3deg); }
+  74% { transform: rotate(-0.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes ss-turn-out {
+  to { transform: rotateY(90deg); }
+}
+
+@keyframes ss-turn-in {
+  from { transform: rotateY(-90deg); }
+  to { transform: rotateY(0deg); }
+}
+
+.hang.is-arriving {
+  animation: ss-swing 2s ease-in-out both;
+}
+
+.tag.turn-out {
+  animation: ss-turn-out 0.2s ease-in forwards;
+}
+
+.tag.turn-in {
+  animation: ss-turn-in 0.34s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hang.is-arriving,
+  .tag.turn-out,
+  .tag.turn-in {
+    animation: none;
+  }
+
+  .btn:active {
+    transform: none;
+  }
+}
+
+@media (min-width: 40rem) {
+  .hang {
+    padding-top: 4.5rem;
+  }
+
+  .twine {
+    height: 9.125rem;
+  }
+
+  .tag {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .sheet {
+    padding: 1.8rem 1.8rem 2rem;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><p style="margin:2rem;font-family:sans-serif">Cette page a besoin de JavaScript pour fonctionner.</p></noscript>
+<script>
+(function () {
+'use strict';
+
+/* ---------------------------------------------------------------------------
+ * Chiffrement du tirage : SHA-256, HMAC, PBKDF2 et scellement, en JavaScript
+ * pur pour donner exactement le même résultat sur tous les appareils.
+ * ------------------------------------------------------------------------- */
+var SSCrypto = (function () {
+  var IV = new Uint32Array([
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+  ]);
+  var K = new Uint32Array([
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ]);
+  var W = new Int32Array(64);
+
+  // Une ronde de compression SHA-256 : H (8 mots) absorbe 64 octets de b à partir de o.
+  function compress(H, b, o) {
+    var i, x, s0, s1, t1, t2;
+    var a = H[0] | 0, bb = H[1] | 0, c = H[2] | 0, d = H[3] | 0;
+    var e = H[4] | 0, f = H[5] | 0, g = H[6] | 0, h = H[7] | 0;
+    for (i = 0; i < 16; i++) {
+      W[i] = (b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3];
+      o += 4;
+    }
+    for (i = 16; i < 64; i++) {
+      x = W[i - 15];
+      s0 = ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
+      x = W[i - 2];
+      s1 = ((x >>> 17) | (x << 15)) ^ ((x >>> 19) | (x << 13)) ^ (x >>> 10);
+      W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0;
+    }
+    for (i = 0; i < 64; i++) {
+      s1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      t1 = (h + s1 + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0;
+      s0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      t2 = (s0 + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0;
+      d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + bb) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+
+  function writeState(H, out, o) {
+    for (var i = 0; i < 8; i++) {
+      out[o++] = H[i] >>> 24; out[o++] = (H[i] >>> 16) & 255;
+      out[o++] = (H[i] >>> 8) & 255; out[o++] = H[i] & 255;
+    }
+  }
+
+  // Termine un hachage commencé : `state` a déjà absorbé `prefixLen` octets.
+  function digestFrom(state, prefixLen, msg) {
+    var H = new Uint32Array(state);
+    var n = msg.length, o = 0;
+    for (; o + 64 <= n; o += 64) compress(H, msg, o);
+    var rem = n - o;
+    var pad = new Uint8Array(rem < 56 ? 64 : 128);
+    pad.set(msg.subarray(o));
+    pad[rem] = 0x80;
+    var total = prefixLen + n;
+    var hi = Math.floor(total / 0x20000000), lo = (total * 8) >>> 0;
+    var L = pad.length;
+    pad[L - 8] = hi >>> 24; pad[L - 7] = (hi >>> 16) & 255; pad[L - 6] = (hi >>> 8) & 255; pad[L - 5] = hi & 255;
+    pad[L - 4] = lo >>> 24; pad[L - 3] = (lo >>> 16) & 255; pad[L - 2] = (lo >>> 8) & 255; pad[L - 1] = lo & 255;
+    compress(H, pad, 0);
+    if (L === 128) compress(H, pad, 64);
+    var out = new Uint8Array(32);
+    writeState(H, out, 0);
+    return out;
+  }
+
+  function sha256(msg) { return digestFrom(IV, 0, msg); }
+
+  // Prépare une clé HMAC : les deux états intermédiaires (ipad et opad) sont calculés une fois.
+  function hmacKey(key) {
+    if (key.length > 64) key = sha256(key);
+    var ib = new Uint8Array(64), ob = new Uint8Array(64), i, k;
+    for (i = 0; i < 64; i++) {
+      k = i < key.length ? key[i] : 0;
+      ib[i] = k ^ 0x36; ob[i] = k ^ 0x5c;
+    }
+    var hi = new Uint32Array(IV), ho = new Uint32Array(IV);
+    compress(hi, ib, 0); compress(ho, ob, 0);
+    return { i: hi, o: ho };
+  }
+
+  function hmac(hk, msg) { return digestFrom(hk.o, 64, digestFrom(hk.i, 64, msg)); }
+
+  // PBKDF2-HMAC-SHA256, sortie de 32 octets (un seul bloc).
+  function pbkdf2(password, salt, iterations) {
+    var hk = hmacKey(password);
+    var first = new Uint8Array(salt.length + 4);
+    first.set(salt);
+    first[salt.length + 3] = 1;
+    var U = hmac(hk, first);
+    var T = new Uint8Array(U);
+    var blk = new Uint8Array(64), H = new Uint32Array(8), j, k;
+    // Les messages font toujours 64 + 32 octets : le bourrage est fixe.
+    blk[32] = 0x80; blk[62] = 0x03; blk[63] = 0x00;
+    for (j = 1; j < iterations; j++) {
+      blk.set(U, 0);
+      H.set(hk.i); compress(H, blk, 0); writeState(H, blk, 0);
+      H.set(hk.o); compress(H, blk, 0); writeState(H, U, 0);
+      for (k = 0; k < 32; k++) T[k] ^= U[k];
+    }
+    return T;
+  }
+
+  function concat(a, b) {
+    var out = new Uint8Array(a.length + b.length);
+    out.set(a, 0); out.set(b, a.length);
+    return out;
+  }
+
+  function ascii(s) {
+    var out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 255;
+    return out;
+  }
+
+  // À partir de la clé dérivée du code : une clé pour chiffrer, une pour authentifier.
+  function prepare(key) {
+    var root = hmacKey(key);
+    return { enc: hmacKey(hmac(root, ascii('secret-santa/enc'))), mac: hmacKey(hmac(root, ascii('secret-santa/mac'))) };
+  }
+
+  function xorStream(ctx, nonce, data) {
+    var out = new Uint8Array(data.length), ctr = new Uint8Array(4), block, i, n = 0;
+    for (i = 0; i < data.length; i++) {
+      if (i % 32 === 0) {
+        ctr[0] = n >>> 24; ctr[1] = (n >>> 16) & 255; ctr[2] = (n >>> 8) & 255; ctr[3] = n & 255;
+        block = hmac(ctx.enc, concat(nonce, ctr));
+        n++;
+      }
+      out[i] = data[i] ^ block[i % 32];
+    }
+    return out;
+  }
+
+  function tagOf(ctx, nonce, ct) { return hmac(ctx.mac, concat(nonce, ct)).subarray(0, 16); }
+
+  function seal(ctx, nonce, plain) {
+    var ct = xorStream(ctx, nonce, plain);
+    return { ct: ct, tag: tagOf(ctx, nonce, ct) };
+  }
+
+  // Renvoie le texte clair, ou null si la clé n'est pas celle de ce message.
+  function open(ctx, nonce, ct, tag) {
+    var expect = tagOf(ctx, nonce, ct), diff = tag.length ^ 16, i;
+    for (i = 0; i < 16; i++) diff |= expect[i] ^ tag[i];
+    return diff === 0 ? xorStream(ctx, nonce, ct) : null;
+  }
+
+  return { sha256: sha256, hmacKey: hmacKey, hmac: hmac, pbkdf2: pbkdf2, prepare: prepare, seal: seal, open: open };
+})();
+
+/* ---------------------------------------------------------------------------
+ * Secret Santa de la famille : version autonome
+ *
+ * Cette page fonctionne seule, chez n'importe quel hébergeur de pages statiques.
+ * Rien n'est envoyé nulle part : la personne qui organise prépare le tirage dans
+ * son navigateur, et chaque participant reçoit un lien personnel qui contient
+ * son petit papier (brouillé, pour qu'on ne le lise pas par mégarde).
+ * ------------------------------------------------------------------------- */
+
+var C = SSCrypto;
+var DEFAULT_TITLE = 'Secret Santa de la famille';
+var MIN_PEOPLE = 3;
+var MAX_PEOPLE = 40;
+var MAX_NAMES_IN_LINK = 20;
+var KEY_ORG = 'secret-santa-organisation';
+
+/* ---------- Petits outils ---------- */
+
+// Espaces insécables de la typographie française devant ? ! ; : et dans les guillemets.
+function T(s) {
+  return s.replace(/ ([?!;])/g, '\u202f$1').replace(/ :/g, '\u00a0:').replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»');
+}
+
+// Dans un message à coller, on s'en tient à l'espace insécable ordinaire, lisible partout.
+function M(s) { return s.replace(/ ([?!;:])/g, '\u00a0$1'); }
+
+function byId(id) { return document.getElementById(id); }
+
+function append(el, child) {
+  if (child == null || child === false) return;
+  if (Array.isArray(child)) { for (var i = 0; i < child.length; i++) append(el, child[i]); return; }
+  el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+}
+
+function h(tag, props) {
+  var el = document.createElement(tag), value = null, k, v;
+  if (props) {
+    for (k in props) {
+      v = props[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k === 'value') value = v;
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, '');
+      else el.setAttribute(k, v);
+    }
+  }
+  for (var i = 2; i < arguments.length; i++) append(el, arguments[i]);
+  if (value !== null) el.value = value;
+  return el;
+}
+
+function setChildren(el, children) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+  append(el, children);
+}
+
+function utf8(s) { return new TextEncoder().encode(s); }
+function utf8Decode(bytes) { return new TextDecoder().decode(bytes); }
+
+function b64url(bytes) {
+  var s = '';
+  for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function unb64url(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  var s = atob(str), out = new Uint8Array(s.length);
+  for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+
+function randBytes(n) {
+  var a = new Uint8Array(n);
+  try { window.crypto.getRandomValues(a); }
+  catch (e) { for (var i = 0; i < n; i++) a[i] = Math.floor(Math.random() * 256); }
+  return a;
+}
+
+// Entier au hasard dans [0, n[, sans biais.
+function randInt(n) {
+  var limit = Math.floor(4294967296 / n) * n, b, x;
+  do {
+    b = randBytes(4);
+    x = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+  } while (x >= limit);
+  return x % n;
+}
+
+function shuffle(a) {
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = randInt(i + 1), t = a[i];
+    a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function randId(len) {
+  var abc = 'abcdefghijklmnopqrstuvwxyz0123456789', s = '';
+  for (var i = 0; i < len; i++) s += abc.charAt(randInt(abc.length));
+  return s;
+}
+
+function nameKey(s) {
+  s = String(s).toLowerCase();
+  if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+function cleanStr(v, max) { return typeof v === 'string' ? v.slice(0, max) : ''; }
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+function isYmd(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
+
+/* ---------- Les petits papiers voyagent dans les liens ---------- */
+
+// Un petit papier = un texte brouillé avec une clé tirée au hasard, rangée dans le lien lui-même.
+// Qui a le lien peut le lire ; qui voit seulement passer le lien n'y lit rien.
+function packSlip(data) {
+  var key = randBytes(16), nonce = randBytes(12);
+  var sealed = C.seal(C.prepare(key), nonce, utf8(JSON.stringify(data)));
+  var out = new Uint8Array(44 + sealed.ct.length);
+  out.set(key, 0); out.set(nonce, 16); out.set(sealed.tag, 28); out.set(sealed.ct, 44);
+  return b64url(out) + 'x'; // toujours une lettre à la fin : les messageries ne la rognent pas
+}
+
+function sanitizeSlip(o) {
+  if (!o || typeof o !== 'object') return null;
+  var slip = {
+    n: Math.max(1, Math.floor(Number(o.n)) || 1),
+    a: Number(o.a) || 0,
+    t: cleanStr(o.t, 80).trim() || DEFAULT_TITLE,
+    d: isYmd(o.d) ? o.d : '',
+    b: cleanStr(o.b, 40).trim(),
+    g: cleanStr(o.g, 40).trim(),
+    r: cleanStr(o.r, 40).trim(),
+    ri: cleanStr(o.ri, 8),
+    w: cleanStr(o.w, 300).trim(),
+    p: []
+  };
+  if (!slip.g || !slip.r) return null;
+  if (Array.isArray(o.p)) {
+    o.p.slice(0, MAX_PEOPLE).forEach(function (name) {
+      name = cleanStr(name, 40).trim();
+      if (name) slip.p.push(name);
+    });
+  }
+  return slip;
+}
+
+function unpackSlip(token) {
+  try {
+    if (token.charAt(token.length - 1) !== 'x') return null;
+    var raw = unb64url(token.slice(0, -1));
+    if (raw.length < 46) return null;
+    var plain = C.open(C.prepare(raw.subarray(0, 16)), raw.subarray(16, 28), raw.subarray(44), raw.subarray(28, 44));
+    return plain ? sanitizeSlip(JSON.parse(utf8Decode(plain))) : null;
+  } catch (e) { return null; }
+}
+
+// Le jeton d'un lien personnel, même si une messagerie a ajouté quelque chose autour.
+function tokenFromHash() {
+  var hash = String(location.hash || '').replace(/^#/, '');
+  try { hash = decodeURIComponent(hash); } catch (e) { /* on garde le texte tel quel */ }
+  var found = /[A-Za-z0-9_-]{40,}/.exec(hash);
+  return found ? found[0] : '';
+}
+
+/* ---------- Ce que garde le navigateur de la personne qui organise ---------- */
+
+function defaultOrg() {
+  return { v: 2, title: DEFAULT_TITLE, date: '', budget: '', people: [], rules: [], count: 0, plain: false, draw: null };
+}
+
+function sanitizeOrg(raw) {
+  var org = defaultOrg(), seen = {};
+  if (!raw || typeof raw !== 'object') return org;
+  org.title = cleanStr(raw.title, 80).trim() || DEFAULT_TITLE;
+  org.date = isYmd(raw.date) ? raw.date : '';
+  org.budget = cleanStr(raw.budget, 40).trim();
+  org.plain = raw.plain === true;
+  org.count = Math.max(0, Math.floor(Number(raw.count)) || 0);
+  (Array.isArray(raw.people) ? raw.people : []).forEach(function (p) {
+    if (!p || typeof p.id !== 'string' || !/^[a-z0-9]{2,8}$/.test(p.id) || seen[p.id]) return;
+    var name = cleanStr(p.name, 40).trim();
+    if (!name || org.people.length >= MAX_PEOPLE) return;
+    seen[p.id] = true;
+    org.people.push({ id: p.id, name: name, wish: cleanStr(p.wish, 300) });
+  });
+  (Array.isArray(raw.rules) ? raw.rules : []).forEach(function (r) {
+    if (Array.isArray(r) && seen[r[0]] === true && seen[r[1]] === true && r[0] !== r[1]) org.rules.push([r[0], r[1]]);
+  });
+  var d = raw.draw;
+  if (d && typeof d === 'object' && d.links && typeof d.links === 'object') {
+    var links = {}, sent = {}, complete = org.people.length >= MIN_PEOPLE;
+    org.people.forEach(function (p) {
+      if (typeof d.links[p.id] === 'string' && d.links[p.id].length < 6000) links[p.id] = d.links[p.id];
+      else complete = false;
+      if (d.sent && d.sent[p.id]) sent[p.id] = true;
+    });
+    if (complete) {
+      org.draw = { n: Math.max(1, Math.floor(Number(d.n)) || 1), at: Number(d.at) || 0, links: links, sent: sent, used: d.used === true };
+    }
+  }
+  return org;
+}
+
+var storageOk = true;
+
+function loadOrg() {
+  try { return sanitizeOrg(JSON.parse(window.localStorage.getItem(KEY_ORG))); }
+  catch (e) { return defaultOrg(); }
+}
+
+function saveOrg() {
+  try {
+    var s = JSON.stringify(org);
+    window.localStorage.setItem(KEY_ORG, s);
+    storageOk = window.localStorage.getItem(KEY_ORG) === s;
+  } catch (e) { storageOk = false; }
+  return storageOk;
+}
+
+var org = loadOrg();
+
+function personOf(list, id) {
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+
+// L'adresse à laquelle la famille peut ouvrir cette page. Vide si elle n'est pas (encore) en ligne.
+function hostedBase() {
+  try {
+    if (!/^https?:$/.test(location.protocol)) return '';
+    if (window.top !== window.self) return '';
+    var host = location.hostname;
+    if (!host || host === 'localhost' || /^127\./.test(host)) return '';
+    if (/(^|\.)(claudeusercontent\.com|claude\.ai|claude\.com|anthropic\.com)$/i.test(host)) return '';
+    return location.origin + location.pathname;
+  } catch (e) { return ''; }
+}
+
+/* ---------- Tirage au sort ---------- */
+
+// Cherche qui offre à qui : jamais soi-même, jamais une paire interdite. null si c'est impossible.
+function drawAssignment(n, forbidden) {
+  var i, j, attempt, perm, ok;
+  // D'abord au hasard pur : toutes les répartitions valides ont la même chance.
+  for (attempt = 0; attempt < 300; attempt++) {
+    perm = [];
+    for (i = 0; i < n; i++) perm.push(i);
+    shuffle(perm);
+    ok = true;
+    for (i = 0; i < n; i++) if (forbidden[i][perm[i]]) { ok = false; break; }
+    if (ok) return perm;
+  }
+  // Contraintes serrées : couplage par chemins augmentants, dans un ordre mélangé.
+  var adj = [], owner = [], to = [];
+  for (i = 0; i < n; i++) {
+    adj.push([]);
+    owner.push(-1);
+    for (j = 0; j < n; j++) if (!forbidden[i][j]) adj[i].push(j);
+    shuffle(adj[i]);
+  }
+  function give(giver, seen) {
+    for (var k = 0; k < adj[giver].length; k++) {
+      var r = adj[giver][k];
+      if (seen[r]) continue;
+      seen[r] = true;
+      if (owner[r] === -1 || give(owner[r], seen)) { owner[r] = giver; return true; }
+    }
+    return false;
+  }
+  var order = [];
+  for (i = 0; i < n; i++) order.push(i);
+  shuffle(order);
+  for (i = 0; i < n; i++) if (!give(order[i], {})) return null;
+  for (j = 0; j < n; j++) to[owner[j]] = j;
+  return to;
+}
+
+function forbiddenMatrix(people, rules) {
+  var index = {}, m = [], i, j;
+  for (i = 0; i < people.length; i++) index[people[i].id] = i;
+  for (i = 0; i < people.length; i++) {
+    m.push([]);
+    for (j = 0; j < people.length; j++) m[i].push(i === j);
+  }
+  rules.forEach(function (r) {
+    var a = index[r[0]], b = index[r[1]];
+    if (a == null || b == null) return;
+    m[a][b] = true; m[b][a] = true;
+  });
+  return m;
+}
+
+function slipFor(info, giver, receiver, n, at) {
+  var data = {
+    n: n, a: at, t: info.title, d: info.date, b: info.budget,
+    g: giver.name, r: receiver.name, ri: receiver.id, w: (receiver.wish || '').trim()
+  };
+  if (info.people.length <= MAX_NAMES_IN_LINK) data.p = info.people.map(function (p) { return p.name; });
+  return packSlip(data);
+}
+
+/* ---------- Dates et petits textes ---------- */
+
+function parseYmd(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  if (!m) return null;
+  var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return d.getMonth() === Number(m[2]) - 1 ? d : null;
+}
+
+function dateLine(ymd) {
+  var d = parseYmd(ymd);
+  if (!d) return null;
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var days = Math.round((d.getTime() - today.getTime()) / 86400000);
+  var opts = { weekday: 'long', day: 'numeric', month: 'long' }, text;
+  if (d.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+  try { text = new Intl.DateTimeFormat('fr-FR', opts).format(d); }
+  catch (e) { text = d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear(); }
+  var when = '';
+  if (days === 0) when = ', c’est aujourd’hui';
+  else if (days === 1) when = ', c’est demain';
+  else if (days > 1) when = ', dans\u00a0' + days + '\u00a0jours';
+  return { date: text, when: when };
+}
+
+function budgetText(b) {
+  b = (b || '').trim();
+  return /^\d+([.,]\d{1,2})?$/.test(b) ? b + '\u00a0€' : b;
+}
+
+function plural(n, one, many) { return n + ' ' + (n > 1 ? many : one); }
+
+/* ---------- Ce qui est affiché ---------- */
+
+var ui = {
+  token: '',              // jeton du lien personnel ouvert, s'il y en a un
+  slip: null,             // le petit papier de ce lien
+  revealed: false,
+  editing: false,         // formulaire de tirage ouvert alors qu'un tirage existe
+  confirmRedraw: false,
+  error: '',
+  flash: '',
+  manualCopy: '',
+  ideasOpen: false,
+  editOpen: false,
+  edit: null,
+  ruleA: '',
+  ruleB: '',
+  me: ''
+};
+var draft = null;
+var shell = null;
+
+function slipMode() { return !!ui.token; }
+function showSetup() { return !slipMode() && (ui.editing || !org.draw); }
+
+function route() {
+  ui.token = tokenFromHash();
+  ui.slip = ui.token ? unpackSlip(ui.token) : null;
+  ui.revealed = false;
+}
+
+function buildShell() {
+  var tag = h('section', { class: 'tag' });
+  var hang = h('div', { class: 'hang is-arriving' }, h('div', { class: 'twine', 'aria-hidden': 'true' }), tag);
+  var slips = h('div'), sheet = h('div');
+  hang.addEventListener('animationend', function (e) {
+    if (e.target === hang) hang.classList.remove('is-arriving');
+  });
+  byId('app').appendChild(h('main', { class: 'page' }, hang, slips, sheet));
+  return { tag: tag, slips: slips, sheet: sheet };
+}
+
+function render() {
+  if (!shell) shell = buildShell();
+  if (showSetup() && !draft) draft = newDraft();
+  setChildren(shell.tag, viewTag());
+  setChildren(shell.slips, viewSlips());
+  setChildren(shell.sheet, viewSheet());
+  var title = ui.slip ? ui.slip.t : showSetup() ? draft.title.trim() || DEFAULT_TITLE : org.title;
+  if (document.title !== title) document.title = title;
+}
+
+function focusOn(id, select) {
+  var el = byId(id);
+  if (!el) return;
+  try { el.focus(); if (select && el.select) el.select(); } catch (e) { /* le curseur reste où il est */ }
+}
+
+function setMsg(id, text, isError) {
+  var el = byId(id);
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = isError ? 'msg msg-error' : 'msg';
+  if (isError) el.setAttribute('role', 'alert'); else el.removeAttribute('role');
+}
+
+function prefersCalm() {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+}
+
+// Retourne l'étiquette : `update` change son contenu pendant qu'elle est de profil.
+function turnTag(update, then) {
+  var tag = shell ? shell.tag : null, done = false;
+  if (!tag || prefersCalm()) { update(); if (then) then(); return; }
+  function half(e) {
+    if (done || (e && e.target !== tag)) return;
+    done = true;
+    tag.removeEventListener('animationend', half);
+    tag.classList.remove('turn-out');
+    update();
+    tag.classList.add('turn-in');
+    setTimeout(function () { tag.classList.remove('turn-in'); }, 420);
+    if (then) then();
+  }
+  tag.addEventListener('animationend', half);
+  tag.classList.add('turn-out');
+  setTimeout(function () { half(null); }, 300);
+}
+
+/* --- L'étiquette --- */
+
+function metaLines(info) {
+  var lines = [], when = dateLine(info.date), budget = budgetText(info.budget);
+  if (when) lines.push(h('p', null, 'Échange des cadeaux le ', h('strong', { text: when.date }), when.when));
+  if (budget) lines.push(h('p', null, T('Budget : '), h('strong', { text: budget })));
+  return lines;
+}
+
+function tagInfo() {
+  if (ui.slip) return { title: ui.slip.t, date: ui.slip.d, budget: ui.slip.b };
+  if (showSetup() && draft) return draft;
+  return org;
+}
+
+function viewTag() {
+  var info = tagInfo();
+  return [
+    h('div', { class: 'eyelet', 'aria-hidden': 'true' }),
+    h('h1', { class: 'title', id: 'ss-title', text: info.title.trim() || DEFAULT_TITLE }),
+    h('div', { class: 'meta', id: 'ss-meta' }, metaLines(info)),
+    h('div', { class: 'tag-body' }, viewTagBody())
+  ];
+}
+
+function viewTagBody() {
+  if (slipMode()) {
+    if (!ui.slip) {
+      return [
+        h('p', { class: 'lead', text: T('Ce lien est incomplet : impossible d’ouvrir ton petit papier.') }),
+        h('p', { class: 'msg', text: T('Ouvre-le directement depuis ton message, sans le recopier. S’il ne marche toujours pas, demande à la personne qui organise de te le renvoyer.') })
+      ];
+    }
+    return ui.revealed ? viewReveal() : [
+      h('p', { class: 'hello' }, 'Bonjour ', h('strong', { text: ui.slip.g }), T(' !')),
+      h('p', { class: 'lead', text: T('Ton petit papier t’attend.') }),
+      h('button', { class: 'btn btn-primary', id: 'ss-open', type: 'button', onclick: showReveal }, 'Voir à qui j’offre'),
+      h('p', { class: 'msg', text: T('Vérifie d’abord que personne ne regarde par-dessus ton épaule.') })
+    ];
+  }
+  if (showSetup()) {
+    return [
+      h('p', { class: 'lead', text: 'Ajoute les participants ci-dessous, puis lance le tirage.' }),
+      h('p', { class: 'msg', text: T('Tu as reçu un lien ? Ouvre-le depuis ton message : c’est lui qui contient ton petit papier.') })
+    ];
+  }
+  return h('p', { class: 'lead', text: 'Le tirage est fait. Il reste à envoyer son lien à chacun, juste en dessous.' });
+}
+
+function viewReveal() {
+  var slip = ui.slip;
+  return h('div', { class: 'reveal', id: 'ss-reveal', tabindex: '-1' },
+    h('p', { class: 'reveal-hello' }, 'Bonjour ', h('strong', { text: slip.g }), ', tu offres un cadeau à'),
+    h('p', { class: 'slip-row' }, h('span', { class: 'slip slip-big' }, h('span', { class: 'hand', text: slip.r }))),
+    slip.w ? h('div', { class: 'wish' },
+      h('p', { class: 'wish-label', text: 'Ce qui lui ferait plaisir' }),
+      h('p', { class: 'wish-text', text: slip.w })) : null,
+    h('button', { class: 'btn btn-ghost', type: 'button', onclick: hideReveal }, 'Cacher mon tirage'),
+    h('p', { class: 'msg', text: slip.n > 1
+      ? T('Chut, c’est un secret ! C’est le tirage n° ' + slip.n + ' : il remplace les précédents.')
+      : T('Chut, c’est un secret !') })
+  );
+}
+
+function showReveal() {
+  turnTag(function () { ui.revealed = true; render(); }, function () { focusOn('ss-reveal'); });
+}
+
+function hideReveal() {
+  turnTag(function () { ui.revealed = false; render(); }, function () { focusOn('ss-open'); });
+}
+
+/* --- Les participants, en petits papiers --- */
+
+function viewSlips() {
+  var names = ui.slip ? ui.slip.p : !slipMode() && org.draw && !showSetup() ? org.people.map(function (p) { return p.name; }) : [];
+  if (!names.length) return null;
+  return h('section', { class: 'slips-wrap', 'aria-labelledby': 'ss-who' },
+    h('h2', { class: 'quiet-title', id: 'ss-who', text: 'Dans le tirage' }),
+    h('ul', { class: 'slips' }, names.map(function (name) {
+      return h('li', null, h('span', { class: 'slip' }, h('span', { class: 'hand', text: name })));
+    }))
+  );
+}
+
+/* --- La feuille de l'organisation --- */
+
+function viewSheet() {
+  if (slipMode()) {
+    return org.draw ? h('p', { class: 'claim' },
+      h('button', { class: 'link-btn', type: 'button', onclick: backToOrg }, 'Revenir à l’organisation du tirage')) : null;
+  }
+  return showSetup() ? viewSetup() : viewDashboard();
+}
+
+function backToOrg() {
+  try { history.replaceState(null, '', location.pathname + location.search); }
+  catch (e) { location.hash = ''; }
+  route();
+  render();
+  window.scrollTo(0, 0);
+}
+
+function newDraft() {
+  return { title: org.title, date: org.date, budget: org.budget, people: clone(org.people), rules: clone(org.rules) };
+}
+
+// Avant le premier tirage, le brouillon est gardé au fur et à mesure.
+function keepDraft() {
+  if (org.draw) return;
+  org.title = draft.title.trim().slice(0, 80) || DEFAULT_TITLE;
+  org.date = isYmd(draft.date) ? draft.date : '';
+  org.budget = draft.budget.trim().slice(0, 40);
+  org.people = clone(draft.people);
+  org.rules = clone(draft.rules);
+  saveOrg();
+}
+
+function refreshTagFromDraft() {
+  var title = byId('ss-title'), meta = byId('ss-meta');
+  if (title) title.textContent = draft.title.trim() || DEFAULT_TITLE;
+  if (meta) setChildren(meta, metaLines(draft));
+  document.title = draft.title.trim() || DEFAULT_TITLE;
+}
+
+function bindDraft(key, max) {
+  return function (e) {
+    draft[key] = String(e.target.value).slice(0, max);
+    keepDraft();
+    refreshTagFromDraft();
+  };
+}
+
+function offlineNote() {
+  return hostedBase() ? null : h('p', { class: 'note', text:
+    T('Cette page n’est pas en ligne pour l’instant (aperçu ou fichier ouvert sur ton appareil). Les liens personnels ne marcheront que depuis son adresse en ligne : c’est de là qu’il faut lancer le tirage.') });
+}
+
+function viewSetup() {
+  var redo = !!org.draw;
+  return h('section', { class: 'sheet', id: 'ss-sheet', 'aria-labelledby': 'ss-sheet-title' },
+    h('h2', { class: 'sheet-title', id: 'ss-sheet-title', text: redo ? 'Refaire le tirage' : 'Prépare le tirage' }),
+    h('p', { class: 'msg', text: redo
+      ? T('Un lien déjà envoyé ne peut pas être annulé : après un nouveau tirage, préviens tout le monde que seul le nouveau lien compte.')
+      : T('Tout reste dans ton navigateur : rien n’est envoyé sur Internet.') }),
+    offlineNote(),
+
+    h('div', { class: 'block' },
+      h('h3', { text: 'L’occasion' }),
+      h('div', { class: 'field' },
+        h('label', { class: 'label', for: 'ss-f-title', text: 'Nom du tirage' }),
+        h('input', { class: 'input', id: 'ss-f-title', type: 'text', maxlength: '80', value: draft.title,
+          autocomplete: 'off', oninput: bindDraft('title', 80) })),
+      h('div', { class: 'row2' },
+        h('div', { class: 'field' },
+          h('label', { class: 'label', for: 'ss-f-date', text: 'Date de l’échange' }),
+          h('input', { class: 'input', id: 'ss-f-date', type: 'date', value: draft.date, oninput: bindDraft('date', 10) })),
+        h('div', { class: 'field' },
+          h('label', { class: 'label', for: 'ss-f-budget', text: 'Budget' }),
+          h('input', { class: 'input', id: 'ss-f-budget', type: 'text', maxlength: '40', value: draft.budget,
+            placeholder: '20\u00a0€', autocomplete: 'off', oninput: bindDraft('budget', 40) })))
+    ),
+
+    h('div', { class: 'block' },
+      h('h3', { text: 'Les participants' }),
+      h('div', { class: 'add-row' },
+        h('div', null,
+          h('label', { class: 'label', for: 'ss-f-name', text: 'Prénom' }),
+          h('input', { class: 'input', id: 'ss-f-name', type: 'text', maxlength: '40', autocomplete: 'off',
+            autocapitalize: 'words', enterkeyhint: 'done', 'aria-describedby': 'ss-add-msg',
+            onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); addPerson(); } } })),
+        h('button', { class: 'btn btn-ghost', type: 'button', onclick: addPerson }, 'Ajouter')),
+      h('p', { class: 'msg', id: 'ss-add-msg' }),
+      h('div', { id: 'ss-people-box' }, viewPeopleBox())
+    ),
+
+    h('div', { class: 'block', id: 'ss-rules-box' }, viewRulesBox()),
+
+    h('div', { id: 'ss-ideas-box' }, viewIdeasBox()),
+
+    h('div', { class: 'block' },
+      h('div', { id: 'ss-launch-box' }, viewLaunchBox()))
+  );
+}
+
+function viewPeopleBox() {
+  var n = draft.people.length, missing = MIN_PEOPLE - n;
+  var note = n === 0 ? 'Personne pour l’instant. Ajoute au moins ' + MIN_PEOPLE + ' prénoms.'
+    : missing > 0 ? plural(n, 'participant', 'participants') + '. Encore ' + missing + ' au minimum.'
+    : plural(n, 'participant', 'participants') + '.';
+  return [
+    n ? h('ul', { class: 'rows' }, draft.people.map(function (p) {
+      return h('li', null,
+        h('span', { class: 'name', text: p.name }),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Retirer ' + p.name,
+          onclick: function () { removePerson(p.id); } }, '×'));
+    })) : null,
+    h('p', { class: 'msg', text: note })
+  ];
+}
+
+function viewRulesBox() {
+  var options = function () {
+    return [h('option', { value: '', text: 'Choisir' })].concat(draft.people.map(function (p) {
+      return h('option', { value: p.id, text: p.name });
+    }));
+  };
+  var nameOf = function (id) { var p = personOf(draft.people, id); return p ? p.name : ''; };
+  return [
+    h('h3', { text: 'Les exceptions' }),
+    h('p', { class: 'msg', text: T('Pour un couple, par exemple : ces deux personnes ne tireront pas le nom l’une de l’autre.') }),
+    draft.people.length < 2 ? null : [
+      h('div', { class: 'pair-row' },
+        h('select', { class: 'input', id: 'ss-rule-a', 'aria-label': 'Première personne', value: ui.ruleA,
+          onchange: function (e) { ui.ruleA = e.target.value; } }, options()),
+        h('span', { text: 'et' }),
+        h('select', { class: 'input', id: 'ss-rule-b', 'aria-label': 'Deuxième personne', value: ui.ruleB,
+          onchange: function (e) { ui.ruleB = e.target.value; } }, options())),
+      h('button', { class: 'btn btn-ghost btn-small', type: 'button', onclick: addRule }, 'Ajouter l’exception'),
+      h('p', { class: 'msg', id: 'ss-rule-msg' })
+    ],
+    draft.rules.length ? h('ul', { class: 'rows' }, draft.rules.map(function (r, index) {
+      var label = nameOf(r[0]) + ' et ' + nameOf(r[1]);
+      return h('li', null,
+        h('span', { class: 'name', text: label }),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Retirer l’exception ' + label,
+          onclick: function () { removeRule(index); } }, '×'));
+    })) : null
+  ];
+}
+
+function wishField(p, prefix, store) {
+  return h('div', { class: 'field' },
+    h('label', { class: 'label', for: prefix + p.id, text: p.name }),
+    h('textarea', { class: 'input', id: prefix + p.id, maxlength: '300', rows: '2', value: store.get(p.id),
+      placeholder: 'Ses idées, ses goûts, sa taille…',
+      oninput: function (e) { store.set(p.id, String(e.target.value).slice(0, 300)); } }));
+}
+
+function viewIdeasBox() {
+  if (!draft.people.length) return null;
+  var store = {
+    get: function (id) { return personOf(draft.people, id).wish || ''; },
+    set: function (id, value) { personOf(draft.people, id).wish = value; keepDraft(); }
+  };
+  return h('details', { class: 'block', id: 'ss-ideas', open: ui.ideasOpen,
+      ontoggle: function (e) { ui.ideasOpen = e.target.open; } },
+    h('summary', { text: 'Idées cadeaux (facultatif)' }),
+    h('p', { class: 'msg', text: T('Note ce qui ferait plaisir à chacun : la personne qui lui offre un cadeau le verra avec son petit papier.') }),
+    draft.people.map(function (p) { return wishField(p, 'ss-i-', store); })
+  );
+}
+
+function viewLaunchBox() {
+  var redo = !!org.draw;
+  var label = ui.confirmRedraw ? 'Confirmer le nouveau tirage' : 'Lancer le tirage';
+  return [
+    h('p', { class: ui.error ? 'msg msg-error' : 'msg', id: 'ss-launch-msg', role: ui.error ? 'alert' : null, text: ui.error }),
+    h('div', { class: 'actions' },
+      h('button', { class: 'btn btn-primary', id: 'ss-launch', type: 'button', onclick: launchDraw }, label),
+      redo ? h('button', { class: 'link-btn', type: 'button', onclick: cancelRedraw }, 'Annuler et garder le tirage actuel') : null)
+  ];
+}
+
+function refreshSetupBoxes() {
+  var boxes = { 'ss-people-box': viewPeopleBox, 'ss-rules-box': viewRulesBox, 'ss-ideas-box': viewIdeasBox, 'ss-launch-box': viewLaunchBox };
+  Object.keys(boxes).forEach(function (id) {
+    var el = byId(id);
+    if (el) setChildren(el, boxes[id]());
+  });
+}
+
+function addPerson() {
+  var input = byId('ss-f-name');
+  var name = input ? input.value.replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+  if (!name) { setMsg('ss-add-msg', T('Écris un prénom avant d’ajouter.'), true); focusOn('ss-f-name'); return; }
+  if (draft.people.length >= MAX_PEOPLE) {
+    setMsg('ss-add-msg', T('La liste est complète : ' + MAX_PEOPLE + ' participants au maximum.'), true);
+    return;
+  }
+  var key = nameKey(name), i, id;
+  for (i = 0; i < draft.people.length; i++) {
+    if (nameKey(draft.people[i].name) === key) {
+      setMsg('ss-add-msg', T('Ce prénom est déjà dans la liste. Ajoute une initiale pour les distinguer.'), true);
+      focusOn('ss-f-name', true);
+      return;
+    }
+  }
+  do { id = 'p' + randId(3); } while (personOf(draft.people, id));
+  draft.people.push({ id: id, name: name, wish: '' });
+  ui.error = ''; ui.confirmRedraw = false;
+  keepDraft();
+  input.value = '';
+  setMsg('ss-add-msg', '', false);
+  refreshSetupBoxes();
+  focusOn('ss-f-name');
+}
+
+function removePerson(id) {
+  draft.people = draft.people.filter(function (p) { return p.id !== id; });
+  draft.rules = draft.rules.filter(function (r) { return r[0] !== id && r[1] !== id; });
+  if (ui.ruleA === id) ui.ruleA = '';
+  if (ui.ruleB === id) ui.ruleB = '';
+  ui.error = ''; ui.confirmRedraw = false;
+  keepDraft();
+  refreshSetupBoxes();
+  focusOn('ss-f-name');
+}
+
+function addRule() {
+  var a = ui.ruleA, b = ui.ruleB;
+  if (!a || !b || a === b || !personOf(draft.people, a) || !personOf(draft.people, b)) {
+    setMsg('ss-rule-msg', T('Choisis deux personnes différentes.'), true);
+    return;
+  }
+  for (var i = 0; i < draft.rules.length; i++) {
+    var r = draft.rules[i];
+    if ((r[0] === a && r[1] === b) || (r[0] === b && r[1] === a)) {
+      setMsg('ss-rule-msg', T('Cette exception est déjà dans la liste.'), true);
+      return;
+    }
+  }
+  draft.rules.push([a, b]);
+  ui.ruleA = ''; ui.ruleB = ''; ui.error = ''; ui.confirmRedraw = false;
+  keepDraft();
+  refreshSetupBoxes();
+}
+
+function removeRule(index) {
+  draft.rules.splice(index, 1);
+  ui.error = ''; ui.confirmRedraw = false;
+  keepDraft();
+  refreshSetupBoxes();
+}
+
+function cancelRedraw() {
+  ui.editing = false; ui.confirmRedraw = false; ui.error = '';
+  draft = null;
+  render();
+  focusOn('ss-redo');
+}
+
+function launchFail(message) {
+  ui.error = message; ui.confirmRedraw = false;
+  var box = byId('ss-launch-box');
+  if (box) setChildren(box, viewLaunchBox());
+}
+
+function launchDraw() {
+  var people = draft.people.map(function (p) { return { id: p.id, name: p.name.trim(), wish: (p.wish || '').trim().slice(0, 300) }; });
+  if (people.length < MIN_PEOPLE) {
+    launchFail(T('Il faut au moins ' + MIN_PEOPLE + ' participants pour que le tirage reste secret.'));
+    return;
+  }
+  var to = drawAssignment(people.length, forbiddenMatrix(people, draft.rules));
+  if (!to) {
+    launchFail(T('Avec ces exceptions, le tirage est impossible. Retire une exception ou ajoute quelqu’un.'));
+    return;
+  }
+  if (org.draw && !ui.confirmRedraw) {
+    ui.confirmRedraw = true; ui.error = '';
+    setChildren(byId('ss-launch-box'), viewLaunchBox());
+    setMsg('ss-launch-msg', T('Les liens déjà envoyés continueront d’afficher l’ancien tirage. Appuie encore une fois pour confirmer.'), false);
+    focusOn('ss-launch');
+    return;
+  }
+
+  var next = {
+    v: 2,
+    title: draft.title.trim().slice(0, 80) || DEFAULT_TITLE,
+    date: isYmd(draft.date) ? draft.date : '',
+    budget: draft.budget.trim().slice(0, 40),
+    people: people,
+    rules: clone(draft.rules),
+    count: org.draw && !org.draw.used ? org.draw.n : org.count + 1,
+    plain: org.plain,
+    draw: null
+  };
+  var links = {}, at = Date.now(), i, check;
+  try {
+    for (i = 0; i < people.length; i++) {
+      links[people[i].id] = slipFor(next, people[i], people[to[i]], next.count, at);
+      // Vérification : le lien se relit, et dit bien ce qu'on y a mis.
+      check = unpackSlip(links[people[i].id]);
+      if (!check || check.g !== people[i].name || check.r !== people[to[i]].name) throw new Error('check');
+    }
+  } catch (e) {
+    launchFail(T('Le tirage n’a pas pu être préparé dans ce navigateur. Réessaie, ou ouvre la page dans un autre navigateur.'));
+    return;
+  }
+  next.draw = { n: next.count, at: at, links: links, sent: {}, used: false };
+  org = next;
+  saveOrg();
+  ui.editing = false; ui.confirmRedraw = false; ui.error = ''; ui.edit = null; ui.manualCopy = ''; ui.me = '';
+  ui.flash = T('Tirage lancé ! Envoie maintenant son lien à chacun.');
+  draft = null;
+  render();
+  var sheet = byId('ss-sheet');
+  if (sheet && sheet.scrollIntoView) sheet.scrollIntoView({ block: 'start' });
+}
+
+/* --- Après le tirage : envoyer les liens, compléter les infos --- */
+
+function linkFor(id) { return hostedBase() + '#' + org.draw.links[id]; }
+
+function canSend() { return !!hostedBase() || org.plain; }
+
+function messageFor(p) {
+  var lines = ['🎁 ' + org.title, 'Coucou ' + p.name + M(' ! Le tirage au sort est fait.')], slip, when, budget;
+  if (hostedBase()) {
+    if (org.draw.n > 1) lines.push(M('C’est un nouveau tirage : l’ancien lien ne compte plus.'));
+    lines.push(M('Touche ton lien personnel pour découvrir à qui tu offres un cadeau :'), linkFor(p.id));
+  } else {
+    slip = unpackSlip(org.draw.links[p.id]);
+    lines.push(M('Tu offres un cadeau à : ') + (slip ? slip.r : '?'));
+    if (slip && slip.w) lines.push(M('Ce qui lui ferait plaisir : ') + slip.w);
+    when = dateLine(org.date); budget = budgetText(org.budget);
+    if (budget) lines.push(M('Budget : ') + budget);
+    if (when) lines.push('Échange des cadeaux le ' + when.date);
+  }
+  lines.push(M('Chut, garde-le pour toi !'));
+  return lines.join('\n');
+}
+
+function copyText(text) {
+  var ok = false;
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.setAttribute('aria-hidden', 'true');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;font-size:16px;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  if (ok) return Promise.resolve(true);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
+    }
+  } catch (e2) { /* presse-papiers indisponible */ }
+  return Promise.resolve(false);
+}
+
+function canShare() {
+  try { return typeof navigator.share === 'function'; } catch (e) { return false; }
+}
+
+function viewDashboard() {
+  var hosted = !!hostedBase();
+  return h('section', { class: 'sheet', id: 'ss-sheet', 'aria-labelledby': 'ss-sheet-title' },
+    h('h2', { class: 'sheet-title', id: 'ss-sheet-title', text: 'Espace organisateur' }),
+    h('p', { class: 'msg', text: T('Ta famille ne voit pas cette partie : chacun n’ouvre que son lien.') }),
+    ui.flash ? h('p', { class: 'flash', role: 'status', text: ui.flash }) : null,
+    storageOk ? null : h('p', { class: 'note', text:
+      T('Ce navigateur ne garde pas le tirage en mémoire : copie la liste de secours avant de fermer la page.') }),
+
+    h('div', { class: 'block' },
+      h('h3', { text: hosted ? 'Envoie son lien à chacun' : 'Envoie son tirage à chacun' }),
+      hosted
+        ? h('p', { class: 'msg', text: T('Chaque lien ouvre le petit papier d’une seule personne. Envoie-le-lui en privé, sans l’ouvrir toi-même.') })
+        : [
+          h('p', { class: 'note', text: T('Cette page n’est pas en ligne : les liens personnels ne s’ouvriraient pas chez ta famille. Mets-la en ligne et relance le tirage depuis son adresse, ou envoie les prénoms en clair.') }),
+          h('label', { class: 'check' },
+            h('input', { type: 'checkbox', id: 'ss-plain', checked: org.plain, onchange: togglePlain }),
+            h('span', { text: T('J’envoie les prénoms en clair : je les verrai en collant les messages.') }))
+        ],
+      h('div', { id: 'ss-send-box' }, viewSendBox()),
+      hosted ? [
+        h('div', { class: 'actions' },
+          h('button', { class: 'btn btn-ghost', id: 'ss-backup', type: 'button', onclick: copyBackup }, 'Copier la liste de secours')),
+        h('p', { class: 'msg', id: 'ss-backup-msg', text: T('Tous les liens, à garder dans tes notes : si ce navigateur oublie le tirage, tu pourras quand même renvoyer le sien à quelqu’un.') }),
+        h('div', { class: 'field' },
+          h('label', { class: 'label', for: 'ss-me', text: T('Tu participes aussi ?') }),
+          h('select', { class: 'input', id: 'ss-me', value: ui.me, onchange: function (e) { ui.me = e.target.value; } },
+            [h('option', { value: '', text: 'Choisis ton prénom' })].concat(org.people.map(function (p) {
+              return h('option', { value: p.id, text: p.name });
+            }))),
+          h('p', { class: 'msg', id: 'ss-me-msg' }),
+          h('div', { class: 'actions' },
+            h('button', { class: 'btn btn-ghost', type: 'button', onclick: openMine }, 'Voir mon tirage')))
+      ] : null
+    ),
+
+    viewEditBlock(),
+
+    h('div', { class: 'block' },
+      h('button', { class: 'btn btn-ghost', id: 'ss-redo', type: 'button', onclick: startRedraw }, 'Changer les participants ou refaire le tirage'))
+  );
+}
+
+function viewSendBox() {
+  var enabled = canSend(), share = canShare();
+  return h('ul', { class: 'rows send-list' }, org.people.map(function (p) {
+    var sent = !!org.draw.sent[p.id];
+    return h('li', null,
+      h('span', { class: 'send-name', text: p.name }),
+      h('span', { class: 'send-actions' },
+        share ? h('button', { class: 'btn btn-small ' + (sent ? 'btn-ghost' : 'btn-solid'), type: 'button', disabled: !enabled,
+          'data-share': p.id, onclick: function () { shareFor(p.id); } }, 'Envoyer') : null,
+        h('button', { class: 'btn btn-small ' + (sent || share ? 'btn-ghost' : 'btn-solid'), type: 'button', disabled: !enabled,
+          'data-copy': p.id, onclick: function () { copyFor(p.id); } }, share ? 'Copier' : 'Copier le message')),
+      sent && ui.manualCopy !== p.id ? h('p', { class: 'send-state', text: 'Message préparé' }) : null,
+      ui.manualCopy === p.id ? h('div', { class: 'send-manual' },
+        h('label', { class: 'label', for: 'ss-manual', text: T('La copie automatique est bloquée ici. Sélectionne ce texte pour le copier :') }),
+        h('textarea', { class: 'input', id: 'ss-manual', readonly: true, value: messageFor(p) })) : null
+    );
+  }));
+}
+
+function refreshSendBox() {
+  var box = byId('ss-send-box');
+  if (box) setChildren(box, viewSendBox());
+}
+
+function markSent(id) {
+  org.draw.sent[id] = true;
+  org.draw.used = true;
+  ui.manualCopy = '';
+  saveOrg();
+}
+
+function copyFor(id) {
+  var p = personOf(org.people, id);
+  if (!p || !canSend()) return;
+  copyText(messageFor(p)).then(function (ok) {
+    if (ok) markSent(id); else ui.manualCopy = id;
+    refreshSendBox();
+    if (ok) {
+      var again = document.querySelector('[data-copy="' + id + '"]');
+      if (again) { try { again.focus(); } catch (e) { /* tant pis pour le curseur */ } }
+    } else {
+      focusOn('ss-manual', true);
+    }
+  });
+}
+
+function shareFor(id) {
+  var p = personOf(org.people, id);
+  if (!p || !canSend()) return;
+  var done;
+  try { done = navigator.share({ text: messageFor(p) }); }
+  catch (e) { copyFor(id); return; }
+  Promise.resolve(done).then(function () {
+    markSent(id);
+    refreshSendBox();
+  }, function (err) {
+    if (err && err.name === 'AbortError') return; // la personne a refermé le menu de partage
+    copyFor(id);
+  });
+}
+
+function togglePlain(e) {
+  org.plain = !!e.target.checked;
+  saveOrg();
+  refreshSendBox();
+}
+
+function copyBackup() {
+  var lines = ['Secret Santa «\u00a0' + org.title + '\u00a0»\u00a0: liens personnels',
+    M('À garder pour toi : chaque lien ouvre le petit papier de la personne.'), ''];
+  org.people.forEach(function (p) { lines.push(p.name, linkFor(p.id), ''); });
+  copyText(lines.join('\n')).then(function (ok) {
+    setMsg('ss-backup-msg', ok ? T('Liste copiée : colle-la dans tes notes.')
+      : T('La copie est bloquée ici. Utilise plutôt le bouton Copier de chaque personne.'), !ok);
+  });
+}
+
+function openMine() {
+  if (!ui.me || !org.draw.links[ui.me]) {
+    setMsg('ss-me-msg', T('Choisis d’abord ton prénom.'), true);
+    return;
+  }
+  location.hash = org.draw.links[ui.me];
+  window.scrollTo(0, 0);
+}
+
+function newEdit() {
+  var wishes = {};
+  org.people.forEach(function (p) { wishes[p.id] = p.wish; });
+  return { title: org.title, date: org.date, budget: org.budget, wishes: wishes };
+}
+
+function viewEditBlock() {
+  if (!ui.edit) ui.edit = newEdit();
+  var e = ui.edit;
+  var store = {
+    get: function (id) { return e.wishes[id] || ''; },
+    set: function (id, value) { e.wishes[id] = value; }
+  };
+  return h('details', { class: 'block', id: 'ss-edit', open: ui.editOpen,
+      ontoggle: function (ev) { ui.editOpen = ev.target.open; } },
+    h('summary', { text: 'Modifier les infos et les idées cadeaux' }),
+    h('p', { class: 'msg', text: T('Le tirage ne change pas, mais les liens oui : il faudra renvoyer le sien à chacun pour qu’il voie les nouveautés.') }),
+    h('div', { class: 'field' },
+      h('label', { class: 'label', for: 'ss-e-title', text: 'Nom du tirage' }),
+      h('input', { class: 'input', id: 'ss-e-title', type: 'text', maxlength: '80', value: e.title, autocomplete: 'off',
+        oninput: function (ev) { e.title = String(ev.target.value).slice(0, 80); } })),
+    h('div', { class: 'row2' },
+      h('div', { class: 'field' },
+        h('label', { class: 'label', for: 'ss-e-date', text: 'Date de l’échange' }),
+        h('input', { class: 'input', id: 'ss-e-date', type: 'date', value: e.date,
+          oninput: function (ev) { e.date = String(ev.target.value).slice(0, 10); } })),
+      h('div', { class: 'field' },
+        h('label', { class: 'label', for: 'ss-e-budget', text: 'Budget' }),
+        h('input', { class: 'input', id: 'ss-e-budget', type: 'text', maxlength: '40', value: e.budget, placeholder: '20\u00a0€',
+          autocomplete: 'off', oninput: function (ev) { e.budget = String(ev.target.value).slice(0, 40); } }))),
+    org.people.map(function (p) { return wishField(p, 'ss-w-', store); }),
+    h('p', { class: ui.error ? 'msg msg-error' : 'msg', id: 'ss-save-msg', role: ui.error ? 'alert' : null, text: ui.error }),
+    h('div', { class: 'actions' },
+      h('button', { class: 'btn btn-primary', id: 'ss-save', type: 'button', onclick: saveEdit }, 'Mettre à jour les liens'))
+  );
+}
+
+// Mêmes paires, nouvelles infos : on réécrit chaque petit papier.
+function saveEdit() {
+  var e = ui.edit, next = clone(org), links = {}, i, p, old, receiver;
+  next.title = e.title.trim().slice(0, 80) || DEFAULT_TITLE;
+  next.date = isYmd(e.date) ? e.date : '';
+  next.budget = e.budget.trim().slice(0, 40);
+  next.people.forEach(function (person) { person.wish = String(e.wishes[person.id] || '').trim().slice(0, 300); });
+  for (i = 0; i < next.people.length; i++) {
+    p = next.people[i];
+    old = unpackSlip(org.draw.links[p.id]);
+    receiver = old ? personOf(next.people, old.ri) : null;
+    if (!receiver) {
+      ui.error = T('Le tirage gardé dans ce navigateur est abîmé : il faut le refaire.');
+      ui.editOpen = true;
+      render();
+      return;
+    }
+    links[p.id] = slipFor(next, p, receiver, org.draw.n, org.draw.at);
+  }
+  next.draw = { n: org.draw.n, at: org.draw.at, links: links, sent: {}, used: org.draw.used };
+  org = next;
+  saveOrg();
+  ui.edit = null; ui.editOpen = false; ui.error = ''; ui.manualCopy = '';
+  ui.flash = T('Liens mis à jour. Les anciens marchent encore, avec les anciennes infos : renvoie le nouveau à chacun.');
+  render();
+  var sheet = byId('ss-sheet');
+  if (sheet && sheet.scrollIntoView) sheet.scrollIntoView({ block: 'start' });
+}
+
+function startRedraw() {
+  ui.editing = true; ui.confirmRedraw = false; ui.error = ''; ui.flash = '';
+  draft = newDraft();
+  render();
+  var sheet = byId('ss-sheet');
+  if (sheet && sheet.scrollIntoView) sheet.scrollIntoView({ block: 'start' });
+}
+
+/* ---------- Démarrage ---------- */
+
+window.addEventListener('hashchange', function () {
+  route();
+  render();
+});
+
+route();
+render();
+
+})();
+</script>
+</body>
+</html>
