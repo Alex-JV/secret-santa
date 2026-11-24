@@ -316,6 +316,17 @@ summary:focus:not(:focus-visible),
   border-color: var(--ink);
 }
 
+.btn-danger {
+  background: var(--btn);
+  color: var(--on-btn);
+}
+
+.reset-link {
+  display: block;
+  width: 100%;
+  color: var(--houx);
+}
+
 .btn-solid {
   border-color: var(--ink);
   background: var(--ink);
@@ -1301,6 +1312,7 @@ var ui = {
   revealed: false,
   editing: false,         // formulaire de tirage ouvert alors qu'un tirage existe
   confirmRedraw: false,
+  confirmReset: false,    // deuxième étape avant de tout effacer
   error: '',
   flash: '',
   manualCopy: '',
@@ -1513,6 +1525,7 @@ function bindDraft(key, max) {
     draft[key] = String(e.target.value).slice(0, max);
     keepDraft();
     refreshTagFromDraft();
+    refreshResetWrap();
   };
 }
 
@@ -1528,6 +1541,7 @@ function viewSetup() {
     h('p', { class: 'msg', text: redo
       ? T('Un lien déjà envoyé ne peut pas être annulé : après un nouveau tirage, préviens tout le monde que seul le nouveau lien compte.')
       : T('Tout reste dans ton navigateur : rien n’est envoyé sur Internet.') }),
+    ui.flash ? h('p', { class: 'flash', role: 'status', text: ui.flash }) : null,
     offlineNote(),
 
     h('div', { class: 'block' },
@@ -1564,7 +1578,9 @@ function viewSetup() {
     h('div', { id: 'ss-ideas-box' }, viewIdeasBox()),
 
     h('div', { class: 'block' },
-      h('div', { id: 'ss-launch-box' }, viewLaunchBox()))
+      h('div', { id: 'ss-launch-box' }, viewLaunchBox())),
+
+    h('div', { id: 'ss-reset-wrap' }, viewResetWrap())
   );
 }
 
@@ -1653,6 +1669,7 @@ function refreshSetupBoxes() {
     var el = byId(id);
     if (el) setChildren(el, boxes[id]());
   });
+  refreshResetWrap();
 }
 
 function addPerson() {
@@ -1874,8 +1891,78 @@ function viewDashboard() {
     viewEditBlock(),
 
     h('div', { class: 'block' },
-      h('button', { class: 'btn btn-ghost', id: 'ss-redo', type: 'button', onclick: startRedraw }, 'Changer les participants ou refaire le tirage'))
+      h('button', { class: 'btn btn-ghost', id: 'ss-redo', type: 'button', onclick: startRedraw }, 'Changer les participants ou refaire le tirage')),
+
+    h('div', { class: 'block', id: 'ss-reset-box' }, viewResetBox())
   );
+}
+
+/* --- Tout effacer et recommencer --- */
+
+function hasSomethingToReset() {
+  var d = draft || org;
+  return !!org.draw || d.people.length > 0 || d.rules.length > 0 || !!d.date || !!d.budget ||
+    (d.title || '').trim() !== DEFAULT_TITLE;
+}
+
+// Dans la préparation, le bouton n'apparaît que s'il y a quelque chose à effacer.
+function viewResetWrap() {
+  return hasSomethingToReset() ? h('div', { class: 'block', id: 'ss-reset-box' }, viewResetBox()) : null;
+}
+
+function refreshResetWrap() {
+  var wrap = byId('ss-reset-wrap');
+  if (wrap && !!byId('ss-reset-box') !== hasSomethingToReset()) setChildren(wrap, viewResetWrap());
+}
+
+function viewResetBox() {
+  if (!ui.confirmReset) {
+    return h('button', { class: 'link-btn reset-link', id: 'ss-reset', type: 'button', onclick: askReset },
+      'Tout effacer et recommencer à zéro');
+  }
+  return [
+    h('h3', { id: 'ss-reset-title', text: 'Tout effacer ?' }),
+    h('p', { class: 'msg', text: org.draw
+      ? T('Les prénoms, les exceptions et les liens de ce tirage seront effacés de ce navigateur. Les liens déjà envoyés continueront d’ouvrir l’ancien petit papier : préviens ta famille que seuls les prochains comptent.')
+      : T('Le nom du tirage, la date, le budget, les prénoms et les exceptions seront effacés.') }),
+    h('div', { class: 'actions' },
+      h('button', { class: 'btn btn-danger', id: 'ss-reset-yes', type: 'button', onclick: doReset }, 'Oui, tout effacer'),
+      h('button', { class: 'link-btn', id: 'ss-reset-no', type: 'button', onclick: cancelReset }, 'Non, garder'))
+  ];
+}
+
+function refreshResetBox() {
+  var box = byId('ss-reset-box');
+  if (box) setChildren(box, viewResetBox());
+}
+
+function askReset() {
+  ui.confirmReset = true;
+  refreshResetBox();
+  focusOn('ss-reset-no');
+}
+
+function cancelReset() {
+  ui.confirmReset = false;
+  refreshResetBox();
+  focusOn('ss-reset');
+}
+
+function doReset() {
+  var old = org, count = old.count;
+  // Le numéro des tirages continue : si des liens ont circulé, les prochains diront qu'ils remplacent les anciens.
+  if (old.draw) count = old.draw.used ? old.draw.n : old.draw.n - 1;
+  org = defaultOrg();
+  org.count = Math.max(0, count);
+  saveOrg();
+  draft = null;
+  ui.editing = false; ui.confirmRedraw = false; ui.confirmReset = false; ui.error = '';
+  ui.edit = null; ui.editOpen = false; ui.ideasOpen = false; ui.manualCopy = ''; ui.me = '';
+  ui.ruleA = ''; ui.ruleB = '';
+  ui.flash = T('Tout est effacé. Tu peux préparer un nouveau tirage.');
+  render();
+  window.scrollTo(0, 0);
+  focusOn('ss-f-title');
 }
 
 function viewSendBox() {
@@ -2031,7 +2118,7 @@ function saveEdit() {
 }
 
 function startRedraw() {
-  ui.editing = true; ui.confirmRedraw = false; ui.error = ''; ui.flash = '';
+  ui.editing = true; ui.confirmRedraw = false; ui.confirmReset = false; ui.error = ''; ui.flash = '';
   draft = newDraft();
   render();
   var sheet = byId('ss-sheet');
