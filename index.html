@@ -1437,7 +1437,9 @@ function viewReveal() {
     h('p', { class: 'slip-row' }, h('span', { class: 'slip slip-big' }, h('span', { class: 'hand', text: slip.r }))),
     slip.w ? h('div', { class: 'wish' },
       h('p', { class: 'wish-label', text: 'Ce qui lui ferait plaisir' }),
-      h('p', { class: 'wish-text', text: slip.w })) : null,
+      h('p', { class: 'wish-text', text: slip.w })) : h('div', { class: 'wish' },
+      h('p', { class: 'wish-label', text: T('Pas d’idée ?') }),
+      h('p', { class: 'wish-text', text: T('Demande discrètement à ses proches : ses parents, ses enfants, son conjoint ou sa conjointe… Ils sauront te souffler ce qui lui ferait plaisir, sans vendre la mèche.') })),
     h('button', { class: 'btn btn-ghost', type: 'button', onclick: hideReveal }, 'Cacher mon tirage'),
     h('p', { class: 'msg', text: slip.n > 1
       ? T('Chut, c’est un secret ! C’est le tirage n° ' + slip.n + ' : il remplace les précédents.')
